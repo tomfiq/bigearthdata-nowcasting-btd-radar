@@ -1,8 +1,41 @@
-# Big Earth Data – Nowcasting (BTD + Radar) – Reproducible Package
+# Rainfall Nowcasting (Himawari-8 BTD + Weather Radar) — Reproducible Code Package
 
-Repo template untuk memenuhi kebutuhan **code + data + manifests** agar paper Anda dapat direplikasi (Big Earth Data).
+This repository provides **reproducible code, scripts, and lightweight notebooks** for the manuscript:
 
-## Struktur folder
+**Radar–Satellite Fusion for Tropical Rainfall Nowcasting: Incorporating Himawari-8 BTD with Weather Radar in a U-Net Framework**
+
+It is structured to support **FAIR/Open** expectations (e.g., Big Earth Data): dataset validation, fixed split protocol, manifest generation, training, and evaluation.
+
+---
+
+## Repository URL
+
+- https://github.com/tomfiq/bigearthdata-nowcasting-btd-radar
+
+---
+
+## Persistent identifiers (DOI)
+
+**Code (this repository, archived from a GitHub release):**
+- Code DOI: `10.5281/zenodo.18055290`
+
+**Dataset (Zenodo):**
+- Dataset DOI (v1.0.0): `10.5281/zenodo.18055349`
+- Dataset concept DOI (all versions): `10.5281/zenodo.18055348`
+
+The dataset record contains compressed NPZ archives (`btd_*`, `t1/t2/t3`, `radar`), `split_days_fixed.json`, `manifests` (per lead time), and `validation_report.json`.
+
+---
+
+## Dataset summary (Zenodo)
+
+- **Region / ROI:** Kendari area, Southeast Sulawesi, Indonesia (280 km × 280 km, **128×128 pixels**), bounded by **2.77°S–5.32°S** and **121.16°E–123.67°E**.
+- **Temporal coverage:** **01 Jan–29 Feb 2024** (60 days), **10-minute cadence** (**8640** aligned timestamps).
+- **Leads:** 10 / 30 / 60 minutes (manifests provided and/or generated).
+
+---
+
+## Repository layout
 
 ```
 bigearthdata_nowcasting_repo/
@@ -11,44 +44,104 @@ bigearthdata_nowcasting_repo/
     validate_npz.py
     make_manifests.py
   src/
+    __init__.py
     modeling.py
     metrics_tf.py
     eval_utils.py
     train.py
     eval.py
     data/
+      __init__.py
       npz_sequence_tf.py
-  notebooks/
-    klasifikasi-curah-hujan-v-2-0.ipynb
+  train.ipynb
+  eval.ipynb
+  requirements.txt
+  split_days_fixed.json
+  LICENSE
+  CITATION.cff
+  README.md
 ```
 
-## 1) Ekstrak arsip dataset (opsional)
-Jika dataset Anda masih berupa arsip (zip/rar/tar.gz), ekstrak menjadi folder:
-`btd_13-08/ btd_15-13/ btd_16-13/ radar/ t1/ t2/ t3/`
+---
 
-Contoh:
-```bash
-python scripts/extract_archives.py --archives_dir "D:\NPZ_archives" --out_dir "D:\NPZ" --sevenzip "C:\Program Files\7-Zip\7z.exe"
-```
+## Quick start (recommended workflow)
 
-## 2) Validasi dataset
-```bash
-python scripts/validate_npz.py --base_dir "D:\NPZ" --expected_count 8640 --expected_hw 128 128 --split_json "D:\split_days_fixed.json" --report_json "D:\NPZ\validation_report.json"
-```
-
-## 3) Buat manifest train/val/test per lead (10/30/60)
-> Anda sudah punya `split_days_fixed.json`, tinggal jalankan:
+### 0) Install dependencies
 
 ```bash
-python scripts/make_manifests.py --base_dir "D:\NPZ" --split_json "D:\split_days_fixed.json" --out_dir "D:\NPZ\manifests" --check_files
+pip install -r requirements.txt
 ```
 
-Output di `manifests/`:
+---
+
+### 1) Prepare the dataset folder (`NPZ/`)
+
+The scripts assume a `--base_dir` that contains the following subfolders:
+
+`btd_13-08/  btd_15-13/  btd_16-13/  radar/  t1/  t2/  t3/`
+
+**Option A — You already have the extracted folders**  
+Point `--base_dir` directly to that directory (e.g., `D:\NPZ` on Windows or `/kaggle/input/<dataset>/NPZ` on Kaggle).
+
+**Option B — You have ZIP archives (as distributed on Zenodo)**  
+Extract the archives into a single `NPZ/` directory. Example (Linux/Kaggle):
+
+```bash
+mkdir -p NPZ
+unzip -q btd_13-08.zip -d NPZ/
+unzip -q btd_15-13.zip -d NPZ/
+unzip -q btd_16-13.zip -d NPZ/
+unzip -q radar.zip    -d NPZ/
+unzip -q t1.zip       -d NPZ/
+unzip -q t2.zip       -d NPZ/
+unzip -q t3.zip       -d NPZ/
+```
+
+**Optional helper:** if your archives are `.rar`/mixed formats, you can use `scripts/extract_archives.py` (requires 7-Zip on Windows).
+
+---
+
+### 2) Validate the dataset (`validation_report.json`)
+
+With radar:
+
+```bash
+python scripts/validate_npz.py --base_dir "D:\NPZ" --include_radar --expected_count 8640 --expected_hw 128 128 --split_json "split_days_fixed.json" --report_json "D:\NPZ\validation_report.json"
+```
+
+Without radar (BTD + targets only):
+
+```bash
+python scripts/validate_npz.py --base_dir "D:\NPZ" --expected_count 8640 --expected_hw 128 128 --split_json "split_days_fixed.json" --report_json "D:\NPZ\validation_report.json"
+```
+
+---
+
+### 3) Generate train/val/test manifests per lead time (10/30/60 minutes)
+
+Default (BTD + radar + T1/T2/T3):
+
+```bash
+python scripts/make_manifests.py --base_dir "D:\NPZ" --split_json "split_days_fixed.json" --out_dir "D:\NPZ\manifests" --check_files
+```
+
+If radar is not available, override required folders:
+
+```bash
+python scripts/make_manifests.py --base_dir "D:\NPZ" --split_json "split_days_fixed.json" --out_dir "D:\NPZ\manifests" --check_files --required_folders btd_13-08 btd_15-13 btd_16-13 t1 t2 t3
+```
+
+Outputs in `manifests/`:
 - `train_lead10.csv`, `val_lead10.csv`, `test_lead10.csv`
-- `train_lead30.csv`, dst
-- `train_lead60.csv`, dst
+- `train_lead30.csv`, `val_lead30.csv`, `test_lead30.csv`
+- `train_lead60.csv`, `val_lead60.csv`, `test_lead60.csv`
 
-## 4) Training (Kaggle / local)
+---
+
+### 4) Training (Kaggle / local)
+
+Example (Kaggle):
+
 ```bash
 python -m src.train \
   --base_dir "/kaggle/input/your-dataset/NPZ" \
@@ -57,12 +150,15 @@ python -m src.train \
   --mode BTDRadar --horizon 60 --epochs 80 --batch_size 4 --hw 128 128
 ```
 
-Output:
+Typical outputs:
 - `best.weights.h5`, `last.weights.h5`
 - `train_log.csv`, `history.json`
 - `norm_stats.json`, `alpha.json`
 
-## 5) Evaluasi test
+---
+
+### 5) Test evaluation
+
 ```bash
 python -m src.eval \
   --base_dir "/kaggle/input/your-dataset/NPZ" \
@@ -72,21 +168,25 @@ python -m src.eval \
   --mode BTDRadar --horizon 60 --hw 128 128
 ```
 
-Hasil:
-- `eval_test_lead60.json` dan `eval_test_lead60.csv`
+Outputs:
+- `eval_test_lead60.json`
+- `eval_test_lead60.csv`
 
-## Catatan FAIR/Open
-- Sertakan `split_days_fixed.json`, `manifests/*.csv`, dan `checksums.sha256` pada paket data yang Anda rilis.
-- Jika radar BMKG dibuka, tambahkan file lisensi/izin BMKG pada repository data.
+---
 
+## FAIR/Open notes
 
-## DOI
+When releasing and reusing the dataset, include at minimum:
+- `split_days_fixed.json`
+- `manifests/*.csv` (or `manifests.zip`)
+- `validation_report.json`
 
-- Dataset DOI (v1.0.0): `10.5281/zenodo.18055349`
-- Dataset concept DOI (all versions): `10.5281/zenodo.18055348`
-- Code DOI (GitHub Release → Zenodo): `10.5281/zenodo.18055290`
+If radar data are governed by third-party terms (e.g., BMKG), please comply with the applicable permission/redistribution conditions.
 
+---
 
-## Repository URL
+## License and citation
 
-- https://github.com/tomfiq/bigearthdata-nowcasting-btd-radar
+- License: see `LICENSE` (MIT).
+- How to cite: see `CITATION.cff`.
+
