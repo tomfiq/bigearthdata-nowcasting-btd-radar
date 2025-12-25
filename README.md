@@ -30,7 +30,6 @@ bigearthdata_nowcasting_repo/
   requirements.txt
   split_days_fixed.json
   LICENSE
-  CITATION.cff
   README.md
 ```
 
