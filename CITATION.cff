@@ -1,0 +1,35 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using the metadata in this file."
+title: "bigearthdata-nowcasting-btd-radar: Reproducible code for radar–satellite fusion rainfall nowcasting (Himawari-8 BTD + weather radar)"
+type: software
+authors:
+  - family-names: "Patombongi"
+    given-names: "Andi"
+    affiliation: "Universitas Gadjah Mada; Catur Sakti College of Informatics and Computer Management"
+  - family-names: "Harjoko"
+    given-names: "Agus"
+    affiliation: "Universitas Gadjah Mada"
+  - family-names: "Wibowo"
+    given-names: "Moh Edi"
+    affiliation: "Universitas Gadjah Mada"
+keywords:
+  - nowcasting
+  - precipitation
+  - Himawari-8
+  - BTD
+  - weather radar
+  - U-Net
+  - deep learning
+license: "MIT"
+repository-code: "https://github.com/tomfiq/bigearthdata-nowcasting-btd-radar"
+url: "https://github.com/tomfiq/bigearthdata-nowcasting-btd-radar"
+version: "v1.0.0"
+date-released: "2025-12-25"
+doi: "10.5281/zenodo.18055290"
+related-identifiers:
+  - type: "isSupplementTo"
+    identifier: "10.5281/zenodo.18055349"
+    description: "Zenodo dataset (v1.0.0) containing NPZ archives, manifests, split protocol, and validation report."
+  - type: "isSupplementTo"
+    identifier: "10.5281/zenodo.18055348"
+    description: "Zenodo dataset concept DOI (all versions)."
