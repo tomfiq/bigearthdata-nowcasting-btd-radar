@@ -1,8 +1,13 @@
-# Big Earth Data – Nowcasting (BTD + Radar) – Reproducible Package
+# Big Earth Data – Rainfall Nowcasting (Himawari-8 BTD + Weather Radar) – Reproducible Package
 
-Repo kode untuk memenuhi kebutuhan **code + scripts + notebooks ringkas** agar paper Anda dapat direplikasi (Big Earth Data).
+This repository provides the **reproducible code, scripts, and lightweight notebooks** for the manuscript:
+**“Radar–Satellite Fusion for Tropical Rainfall Nowcasting: Incorporating Himawari-8 BTD with Weather Radar in a U-Net Framework.”**
 
-## Struktur folder (repo kode)
+It is designed to support **FAIR/Open** expectations (Big Earth Data): dataset validation, split protocol, manifest generation, training, and evaluation.
+
+---
+
+## Repository layout (code repo)
 
 ```
 bigearthdata_nowcasting_repo/
@@ -25,62 +30,78 @@ bigearthdata_nowcasting_repo/
   requirements.txt
   split_days_fixed.json
   LICENSE
+  CITATION.cff
   README.md
 ```
 
-## Dataset (repo data / Zenodo)
+---
 
-Dataset (archives, manifests, split_days_fixed.json, validation_report.json) disarankan dirilis di Zenodo.
+## Data release (Zenodo / data repo)
+
+The dataset (archives, manifests, `split_days_fixed.json`, `validation_report.json`) should be released on Zenodo.
+
 - Dataset DOI: `10.5281/zenodo.<DATASET_DOI>`
-- Code DOI (GitHub Release -> Zenodo): `10.5281/zenodo.<CODE_DOI>`
+- Code DOI (GitHub Release → Zenodo): `10.5281/zenodo.<CODE_DOI>`
 
-## 1) Ekstrak arsip dataset (opsional)
+**Note on restricted radar data (if applicable):**  
+If the BMKG radar archive cannot be fully open, consider publishing (i) an open dataset (BTD + targets + manifests) and (ii) radar data as restricted/by-request, following your permission terms.
 
-Jika dataset Anda berupa arsip (zip/rar/tar.gz), ekstrak menjadi folder:
-`btd_13-08/ btd_15-13/ btd_16-13/ radar/ t1/ t2/ t3/`
+---
 
-Contoh (Windows):
+## 1) (Optional) Extract dataset archives
+
+If your data are provided as archives (zip/rar/tar.gz), extract them into:
+
+`btd_13-08/  btd_15-13/  btd_16-13/  radar/  t1/  t2/  t3/`
+
+Example (Windows):
 ```bat
 python scripts\extract_archives.py --archives_dir "D:\NPZ_archives" --out_dir "D:\NPZ" --sevenzip "C:\Program Files\7-Zip\7z.exe"
 ```
 
-Contoh (Linux/Kaggle):
+Example (Linux/Kaggle):
 ```bash
 python scripts/extract_archives.py --archives_dir "/kaggle/input/your-data/archives" --out_dir "/kaggle/working/NPZ"
 ```
 
-## 2) Validasi dataset
+---
 
-Dengan radar:
+## 2) Validate the dataset
+
+With radar:
 ```bash
 python scripts/validate_npz.py --base_dir "D:\NPZ" --include_radar --expected_count 8640 --expected_hw 128 128 --split_json "split_days_fixed.json" --report_json "D:\NPZ\validation_report.json"
 ```
 
-Tanpa radar (hanya BTD + T1/T2/T3):
+Without radar (BTD + targets only):
 ```bash
 python scripts/validate_npz.py --base_dir "D:\NPZ" --expected_count 8640 --expected_hw 128 128 --split_json "split_days_fixed.json" --report_json "D:\NPZ\validation_report.json"
 ```
 
-## 3) Buat manifest train/val/test per lead (10/30/60)
+---
+
+## 3) Generate train/val/test manifests per lead time (10/30/60 minutes)
 
 Default (BTD + radar + T1/T2/T3):
 ```bash
 python scripts/make_manifests.py --base_dir "D:\NPZ" --split_json "split_days_fixed.json" --out_dir "D:\NPZ\manifests" --check_files
 ```
 
-Jika radar tidak tersedia, override folder wajib:
+If radar is not available, override required folders:
 ```bash
 python scripts/make_manifests.py --base_dir "D:\NPZ" --split_json "split_days_fixed.json" --out_dir "D:\NPZ\manifests" --check_files --required_folders btd_13-08 btd_15-13 btd_16-13 t1 t2 t3
 ```
 
-Output di `manifests/`:
+Outputs in `manifests/`:
 - `train_lead10.csv`, `val_lead10.csv`, `test_lead10.csv`
-- `train_lead30.csv`, dst
-- `train_lead60.csv`, dst
+- `train_lead30.csv`, `val_lead30.csv`, `test_lead30.csv`
+- `train_lead60.csv`, `val_lead60.csv`, `test_lead60.csv`
+
+---
 
 ## 4) Training (Kaggle / local)
 
-Contoh (Kaggle):
+Example (Kaggle):
 ```bash
 python -m src.train \
   --base_dir "/kaggle/input/your-dataset/NPZ" \
@@ -89,12 +110,14 @@ python -m src.train \
   --mode BTDRadar --horizon 60 --epochs 80 --batch_size 4 --hw 128 128
 ```
 
-Output:
+Typical outputs:
 - `best.weights.h5`, `last.weights.h5`
 - `train_log.csv`, `history.json`
 - `norm_stats.json`, `alpha.json`
 
-## 5) Evaluasi test
+---
+
+## 5) Test evaluation
 
 ```bash
 python -m src.eval \
@@ -105,15 +128,24 @@ python -m src.eval \
   --mode BTDRadar --horizon 60 --hw 128 128
 ```
 
-Hasil:
-- `eval_test_lead60.json` dan `eval_test_lead60.csv`
+Outputs:
+- `eval_test_lead60.json`
+- `eval_test_lead60.csv`
 
-## Catatan FAIR/Open
+---
 
-- Sertakan `split_days_fixed.json`, `manifests/*.csv`, dan `validation_report.json` pada paket data yang Anda rilis.
-- Jika radar BMKG dibuka, tambahkan dokumen izin/ketentuan pemakaian radar pada repository data.
+## FAIR/Open notes
 
-## Lisensi & sitasi
+When releasing the dataset, include:
+- `split_days_fixed.json`
+- `manifests/*.csv`
+- `validation_report.json`
 
-- Kode: lihat `LICENSE` (MIT).
-- Sitasi kode: lihat `CITATION.cff`.
+If radar data are included, attach the relevant permission/terms of use documentation.
+
+---
+
+## License and citation
+
+- License: see `LICENSE` (MIT).
+- How to cite: see `CITATION.cff`.
